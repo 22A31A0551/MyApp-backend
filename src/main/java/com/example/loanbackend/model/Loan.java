@@ -20,7 +20,18 @@ public class Loan {
     private String interest;
     private String date;
 
-    // getters and setters
+    // ✅ Always default to Active (VERY IMPORTANT)
+    private String status;
+
+    private String repaymentDate;
+    private String amountPaid;
+
+    // ✅ DEFAULT CONSTRUCTOR (IMPORTANT)
+    public Loan() {
+        this.status = "Active";
+    }
+
+    // 🔧 GETTERS & SETTERS
 
     public Long getId() {
         return id;
@@ -96,5 +107,36 @@ public class Loan {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    // ✅ STATUS (SAFE HANDLING)
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        // 🔥 Prevent null override
+        if (status == null || status.isEmpty()) {
+            this.status = "Active";
+        } else {
+            this.status = status;
+        }
+    }
+
+    // ✅ REPAYMENT
+    public String getRepaymentDate() {
+        return repaymentDate;
+    }
+
+    public void setRepaymentDate(String repaymentDate) {
+        this.repaymentDate = repaymentDate;
+    }
+
+    public String getAmountPaid() {
+        return amountPaid;
+    }
+
+    public void setAmountPaid(String amountPaid) {
+        this.amountPaid = amountPaid;
     }
 }
