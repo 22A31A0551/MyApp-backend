@@ -1,16 +1,19 @@
 package com.example.loanbackend.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.time.LocalDate;
+
 import com.example.loanbackend.service.EmailService;
 import com.example.loanbackend.model.Loan;
 import com.example.loanbackend.repository.LoanRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.http.ResponseEntity;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/loans")
 public class LoanController {
 
@@ -20,15 +23,14 @@ public class LoanController {
     @Autowired
     private LoanRepository loanRepository;
 
-    // ✅ 1. CREATE LOAN
+    // ✅ CREATE LOAN
     @PostMapping
     public Loan saveLoan(@RequestBody Loan loan) {
 
-        loan.setStatus("Active"); // default status
+        loan.setStatus("Active");
 
         Loan savedLoan = loanRepository.save(loan);
 
-        // 📧 Send email
         if (loan.getEmail() != null && !loan.getEmail().isEmpty()) {
             emailService.sendEmail(
                     loan.getEmail(),
@@ -41,38 +43,34 @@ public class LoanController {
         return savedLoan;
     }
 
-    // ✅ 2. GET ALL LOANS
+    // ✅ GET ALL LOANS
     @GetMapping
     public List<Loan> getAllLoans() {
         return loanRepository.findAll();
     }
 
-    // ✅ 3. SEARCH ACTIVE LOANS
+    // ✅ SEARCH LOANS
     @GetMapping("/search")
     public List<Loan> searchLoans(@RequestParam String name) {
         return loanRepository.findByNameContainingAndStatus(name, "Active");
     }
 
-    // ✅ 4. EDIT LOAN (FINAL FIXED)
+    // ✅ EDIT LOAN
     @PutMapping("/edit/{id}")
     public Loan editLoan(@PathVariable Long id, @RequestBody Loan updatedLoan) {
 
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        // update only required fields
         loan.setName(updatedLoan.getName());
         loan.setPhone(updatedLoan.getPhone());
         loan.setAmount(updatedLoan.getAmount());
         loan.setItem(updatedLoan.getItem());
 
-        // 🔥 DO NOT TOUCH OTHER FIELDS
-        // (this avoids null errors)
-
         return loanRepository.save(loan);
     }
 
-    // ✅ 5. CLOSE LOAN
+    // ✅ CLOSE LOAN
     @PutMapping("/close/{id}")
     public Loan closeLoan(@PathVariable Long id, @RequestBody Loan updatedLoan) {
 
@@ -86,10 +84,52 @@ public class LoanController {
         return loanRepository.save(loan);
     }
 
-    // ✅ 6. DELETE LOAN
+    // ✅ DELETE LOAN
     @DeleteMapping("/{id}")
     public String deleteLoan(@PathVariable Long id) {
         loanRepository.deleteById(id);
         return "Loan deleted successfully";
+    }
+
+    // ✅ EXPIRING LOANS
+    @GetMapping("/expiring")
+    public List<Loan> getExpiringLoans() {
+
+        List<Loan> allLoans = loanRepository.findAll();
+        List<Loan> expiringLoans = new ArrayList<>();
+
+        LocalDate today = LocalDate.now();
+
+        for (Loan loan : allLoans) {
+
+            if (loan.getDate() == null || loan.getStatus() == null) continue;
+
+            LocalDate loanDate = LocalDate.parse(loan.getDate().substring(0, 10));
+            LocalDate expiryDate = loanDate.plusMonths(11);
+
+            if (!today.isBefore(expiryDate) && "Active".equalsIgnoreCase(loan.getStatus())) {
+                expiringLoans.add(loan);
+            }
+        }
+
+        return expiringLoans;
+    }
+
+    // ✅ SEND REMINDER (CLEAN VERSION)
+    @GetMapping("/send-reminder/{id}")
+    public ResponseEntity<String> sendReminder(@PathVariable Long id) {
+
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if (loan.getEmail() != null && !loan.getEmail().isEmpty()) {
+            emailService.sendReminderEmail(
+                    loan.getEmail(),
+                    loan.getName(),
+                    loan.getAmount()
+            );
+        }
+
+        return ResponseEntity.ok("Email sent successfully");
     }
 }
