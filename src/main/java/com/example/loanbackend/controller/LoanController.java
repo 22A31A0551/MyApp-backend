@@ -104,11 +104,18 @@ public class LoanController {
 
             if (loan.getDate() == null || loan.getStatus() == null) continue;
 
-            LocalDate loanDate = LocalDate.parse(loan.getDate().substring(0, 10));
-            LocalDate expiryDate = loanDate.plusMonths(11);
+            try {
+                String dateStr = loan.getDate().trim();
+                if (dateStr.length() < 10) continue;
+                
+                LocalDate loanDate = LocalDate.parse(dateStr.substring(0, 10));
+                LocalDate expiryDate = loanDate.plusMonths(11);
 
-            if (!today.isBefore(expiryDate) && "Active".equalsIgnoreCase(loan.getStatus())) {
-                expiringLoans.add(loan);
+                if (!today.isBefore(expiryDate) && "Active".equalsIgnoreCase(loan.getStatus())) {
+                    expiringLoans.add(loan);
+                }
+            } catch (Exception e) {
+                // Gracefully ignore parsing errors for bad/malformed date formats
             }
         }
 
