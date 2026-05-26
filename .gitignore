@@ -1,3 +1,6 @@
 # 🔐 Sensitive config
 src/main/resources/application.properties
 .env
+
+# 📦 Build output
+target/
