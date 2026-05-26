@@ -11,11 +11,14 @@ import com.example.loanbackend.repository.LoanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/loans")
 public class LoanController {
+    private static final Logger logger = LoggerFactory.getLogger(LoanController.class);
 
     @Autowired
     private EmailService emailService;
@@ -106,7 +109,10 @@ public class LoanController {
 
             try {
                 String dateStr = loan.getDate().trim();
-                if (dateStr.length() < 10) continue;
+                if (dateStr.length() < 10) {
+                    logger.warn("Skipping loan id {} due to short date string: '{}'", loan.getId(), dateStr);
+                    continue;
+                }
                 
                 LocalDate loanDate = LocalDate.parse(dateStr.substring(0, 10));
                 LocalDate expiryDate = loanDate.plusMonths(11);
@@ -115,7 +121,7 @@ public class LoanController {
                     expiringLoans.add(loan);
                 }
             } catch (Exception e) {
-                // Gracefully ignore parsing errors for bad/malformed date formats
+                // Log parsing errors if needed
             }
         }
 

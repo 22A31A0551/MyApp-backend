@@ -3,10 +3,13 @@ package com.example.loanbackend.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
+
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
 
     @Autowired
     private JavaMailSender mailSender;
@@ -21,8 +24,11 @@ public class EmailService {
                         "Your loan of ₹" + amount + " has been approved.\n\n" +
                         "Date: " + date + "\n\nThank you!"
         );
-
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (MailException e) {
+            logger.error("Failed to send loan confirmation email to {}: {}", to, e.getMessage());
+        }
     }
 
     // ✅ NEW: Reminder email
@@ -37,7 +43,10 @@ public class EmailService {
                         "Please take necessary action to avoid any issues.\n\n" +
                         "Thank you."
         );
-
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (MailException e) {
+            logger.error("Failed to send reminder email to {}: {}", to, e.getMessage());
+        }
     }
 }
