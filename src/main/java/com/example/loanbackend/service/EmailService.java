@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.MailException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +16,7 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     // ✅ EXISTING: Loan creation email
+    @Async
     public void sendEmail(String to, String name, String amount, String date) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
@@ -26,12 +28,14 @@ public class EmailService {
         );
         try {
             mailSender.send(message);
+            logger.info("Loan confirmation email sent successfully to {}", to);
         } catch (MailException e) {
             logger.error("Failed to send loan confirmation email to {}: {}", to, e.getMessage());
         }
     }
 
     // ✅ NEW: Reminder email
+    @Async
     public void sendReminderEmail(String to, String name, String amount) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
@@ -45,8 +49,9 @@ public class EmailService {
         );
         try {
             mailSender.send(message);
+            logger.info("Reminder email sent successfully to {}", to);
         } catch (MailException e) {
             logger.error("Failed to send reminder email to {}: {}", to, e.getMessage());
         }
     }
-}
+}
